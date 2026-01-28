@@ -146,15 +146,8 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
-import { Pool } from "pg";
+import { pool } from "@/app/backend/db";
 
-const pool = new Pool({
-  host: "localhost",
-  user: "postgres",
-  password: "root",
-  database: "test2",
-  port: 5432,
-});
 
 export const authOptions: NextAuthOptions = {
   providers: [
