@@ -5,6 +5,7 @@ import CategoryManagement from "@/app/components/CategoryManagement";
 import ComplaintList from "@/app/components/ComplaintList";
 import LogoutButton from "@/app/components/LogoutButton";
 import ComplaintForm from "@/app/components/ComplaintForm";
+import UserComplaintsClient from "@/app/components/UserComplaintsClient";
 export default function userDashboard() {
   const { data: session, status } = useSession();
 
@@ -31,9 +32,11 @@ export default function userDashboard() {
             <p className="text-xs text-gray-500">View and assign pending complaints</p>
           </div>
           <LogoutButton></LogoutButton>
+          <a href="user/complaint">New Complaint</a>
         </div>
       </header>
     
+    {/* <UserComplaintsClient></UserComplaintsClient> */}
     </> 
   )
 }
