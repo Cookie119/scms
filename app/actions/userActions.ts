@@ -1,6 +1,6 @@
 "use server";
 
-import { sql } from "@/app/backend/db2";
+import { pool } from "@/app/backend/db";
 
 export type UserInput = {
   email: string;
@@ -19,8 +19,10 @@ export type UserUpdate = Partial<UserInput> & {
 
 // Get all users with role and flat info
 export async function showusers() {
+  const client = await pool.connect();
+  
   try {
-    const users = await sql`
+    const result = await client.query(`
       SELECT 
         u.id,
         u.email,
@@ -39,47 +41,59 @@ export async function showusers() {
       LEFT JOIN public.roles r ON u.role_id = r.role_id
       LEFT JOIN public.flats f ON u.flat_id = f.id
       ORDER BY u.created_at DESC
-    `;
-    return users;
+    `);
+    return result.rows;
   } catch (error) {
     console.error("Error fetching users:", error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 
 // Get all roles
 export async function getRoles() {
+  const client = await pool.connect();
+  
   try {
-    const roles = await sql`
+    const result = await client.query(`
       SELECT role_id, role_name 
       FROM public.roles 
       WHERE deleted_at IS NULL
       ORDER BY role_id
-    `;
-    return roles;
+    `);
+    return result.rows;
   } catch (error) {
     console.error("Error fetching roles:", error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 
 // Get all flats
 export async function getFlats() {
+  const client = await pool.connect();
+  
   try {
-    const flats = await sql`
+    const result = await client.query(`
       SELECT id, flat_number, floor_number 
       FROM public.flats 
       ORDER BY floor_number, flat_number
-    `;
-    return flats;
+    `);
+    return result.rows;
   } catch (error) {
     console.error("Error fetching flats:", error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 
 // Add new user
 export async function addusers(userData: UserInput) {
+  const client = await pool.connect();
+  
   try {
     // Validate required fields
     if (!userData.email?.trim()) throw new Error("Email is required");
@@ -88,18 +102,18 @@ export async function addusers(userData: UserInput) {
     if (!userData.role_id) throw new Error("Role is required");
     
     // Check if email exists
-    const existingUser = await sql`
-      SELECT id FROM public.users 
-      WHERE email = ${userData.email.toLowerCase().trim()} 
-        AND deleted_at IS NULL
-    `;
+    const existingUser = await client.query(
+      `SELECT id FROM public.users 
+       WHERE email = $1 AND deleted_at IS NULL`,
+      [userData.email.toLowerCase().trim()]
+    );
     
-    if (existingUser.length > 0) {
+    if (existingUser.rows.length > 0) {
       throw new Error("User with this email already exists");
     }
 
-    const result = await sql`
-      INSERT INTO public.users (
+    const result = await client.query(
+      `INSERT INTO public.users (
         email, 
         password, 
         role_id, 
@@ -108,22 +122,24 @@ export async function addusers(userData: UserInput) {
         flat_id,
         created_at,
         updated_at
-      ) VALUES (
-        ${userData.email.toLowerCase().trim()},
-        ${userData.password},
-        ${userData.role_id},
-        ${userData.name.trim()},
-        ${userData.phone_number?.trim() || null},
-        ${userData.flat_id || null},
-        CURRENT_TIMESTAMP,
-        CURRENT_TIMESTAMP
-      ) RETURNING id, email, name, role_id
-    `;
+      ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING id, email, name, role_id`,
+      [
+        userData.email.toLowerCase().trim(),
+        userData.password,
+        userData.role_id,
+        userData.name.trim(),
+        userData.phone_number?.trim() || null,
+        userData.flat_id || null
+      ]
+    );
     
-    return result[0];
+    return result.rows[0];
   } catch (error) {
     console.error("Error adding user:", error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 
@@ -176,27 +192,29 @@ export async function addUserForm(formData: FormData) {
 
 // Update user
 export async function updateusers({ id, ...updates }: UserUpdate) {
+  const client = await pool.connect();
+  
   try {
     // Check if user exists
-    const existingUser = await sql`
-      SELECT id FROM public.users 
-      WHERE id = ${id} AND deleted_at IS NULL
-    `;
+    const existingUser = await client.query(
+      `SELECT id FROM public.users 
+       WHERE id = $1 AND deleted_at IS NULL`,
+      [id]
+    );
     
-    if (existingUser.length === 0) {
+    if (existingUser.rows.length === 0) {
       throw new Error("User not found");
     }
 
     // Check for duplicate email
     if (updates.email) {
-      const duplicateEmail = await sql`
-        SELECT id FROM public.users 
-        WHERE email = ${updates.email.toLowerCase().trim()} 
-          AND id != ${id} 
-          AND deleted_at IS NULL
-      `;
+      const duplicateEmail = await client.query(
+        `SELECT id FROM public.users 
+         WHERE email = $1 AND id != $2 AND deleted_at IS NULL`,
+        [updates.email.toLowerCase().trim(), id]
+      );
       
-      if (duplicateEmail.length > 0) {
+      if (duplicateEmail.rows.length > 0) {
         throw new Error("Email already exists");
       }
     }
@@ -251,20 +269,22 @@ export async function updateusers({ id, ...updates }: UserUpdate) {
     const query = `
       UPDATE public.users 
       SET ${updateFields.join(", ")}, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $${values.length} AND deleted_at IS NULL
+      WHERE id = $${paramIndex} AND deleted_at IS NULL
       RETURNING id, email, name, role_id
     `;
     
-    const result = await sql.unsafe(query, values);
+    const result = await client.query(query, values);
     
-    if (result.length === 0) {
+    if (result.rows.length === 0) {
       throw new Error("Failed to update user");
     }
     
-    return result[0];
+    return result.rows[0];
   } catch (error) {
     console.error("Error updating user:", error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 
@@ -329,31 +349,38 @@ export async function deleteusers(id: number) {
     throw new Error("Invalid user ID");
   }
 
+  const client = await pool.connect();
+  
   try {
-    const result = await sql`
-      UPDATE public.users 
-      SET deleted_at = CURRENT_TIMESTAMP
-      WHERE id = ${id} AND deleted_at IS NULL
-      RETURNING id, email, name
-    `;
+    const result = await client.query(
+      `UPDATE public.users 
+       SET deleted_at = CURRENT_TIMESTAMP
+       WHERE id = $1 AND deleted_at IS NULL
+       RETURNING id, email, name`,
+      [id]
+    );
     
-    if (result.length === 0) {
+    if (result.rows.length === 0) {
       throw new Error("User not found or already deleted");
     }
     
-    return result[0];
+    return result.rows[0];
   } catch (error) {
     console.error("Error deleting user:", error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 
 // Search users
 export async function searchUsers(searchTerm: string) {
+  const client = await pool.connect();
+  
   try {
     const term = `%${searchTerm}%`;
-    const users = await sql`
-      SELECT 
+    const result = await client.query(
+      `SELECT 
         u.id,
         u.email,
         u.name,
@@ -368,15 +395,18 @@ export async function searchUsers(searchTerm: string) {
       LEFT JOIN public.flats f ON u.flat_id = f.id
       WHERE u.deleted_at IS NULL 
         AND (
-          u.name ILIKE ${term} 
-          OR u.email ILIKE ${term} 
-          OR u.phone_number ILIKE ${term}
+          u.name ILIKE $1 
+          OR u.email ILIKE $1 
+          OR u.phone_number ILIKE $1
         )
-      ORDER BY u.name
-    `;
-    return users;
+      ORDER BY u.name`,
+      [term]
+    );
+    return result.rows;
   } catch (error) {
     console.error("Error searching users:", error);
     throw error;
+  } finally {
+    client.release();
   }
 }

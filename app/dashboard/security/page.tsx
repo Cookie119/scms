@@ -3,7 +3,7 @@ import { getUserComplaints } from "@/app/actions/usercomplaintlist";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
-// import VisitorEntryForm from "@/app/components/VisitorEntryForm";
+import VisitorEntryForm from "@/app/components/VisitorEntryForm";
 import LogoutButton from "@/app/components/LogoutButton";
 
 export default async function Page() {
@@ -31,7 +31,7 @@ export default async function Page() {
           <LogoutButton />
         </div>
       </header>
-{/* <VisitorEntryForm></VisitorEntryForm> */}
+<VisitorEntryForm></VisitorEntryForm>
     </>
   )
 }
