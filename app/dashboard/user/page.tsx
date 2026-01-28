@@ -1,22 +1,39 @@
-import UserComplaintsClient from "@/app/components/UserComplaintsClient";
-import { getUserComplaints } from "@/app/actions/usercomplaintlist";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { redirect } from "next/navigation";
+"use client";
 
-export default async function Page() {
-  const session = await getServerSession(authOptions);
+import { useSession, signIn } from "next-auth/react";
+import CategoryManagement from "@/app/components/CategoryManagement";
+import ComplaintList from "@/app/components/ComplaintList";
+import LogoutButton from "@/app/components/LogoutButton";
+import ComplaintForm from "@/app/components/ComplaintForm";
+export default function userDashboard() {
+  const { data: session, status } = useSession();
 
+  if (status === "loading") {
+    return <p>Loading...</p>;
+  }
 
-  
-
-  if (!session) redirect("/api/auth/signin");
+  if (!session) {
+    // Not logged in → redirect
+    signIn();
+    return <p>Redirecting to login...</p>;
+  }
 
   if (session.user.role !== "user") {
     return <p>Access Denied</p>;
   }
 
-  const complaints = await getUserComplaints(); // ✅ ACTION CALLED HERE
-
-  return <UserComplaintsClient complaints={complaints} />;
+  return (
+   <>
+     <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Staff Board</h1>
+            <p className="text-xs text-gray-500">View and assign pending complaints</p>
+          </div>
+          <LogoutButton></LogoutButton>
+        </div>
+      </header>
+    
+    </> 
+  )
 }
