@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react";
 import { checkComplaintAction, getStatuses } from "@/app/actions/checkcomplaint";
 import ComplaintForm from "@/app/components/ComplaintForm";
-import ViewRegister from "@/app/components/ViewRegister"
+// import ViewRegister from "@/app/components/ViewRegister"
 import CategoryManagement from "@/app/components/CategoryManagement";
 import ComplaintList from "@/app/components/ComplaintList";
 import LogoutButton from "@/app/components/LogoutButton";
 import RolePage from "@/app/components/RolePage";
 import { useSession, signIn } from "next-auth/react";
 import AddCategoryPage from "@/app/components/Addcategory";
-import UserManagement from "@/app/components/UserManagement";
+// import UserManagement from "@/app/components/UserManagement";
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -41,8 +41,8 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-   <ViewRegister></ViewRegister>
-    <UserManagement></UserManagement>
+   {/* <ViewRegister></ViewRegister> */}
+    {/* <UserManagement></UserManagement> */}
     <RolePage></RolePage>
    <CategoryManagement></CategoryManagement>
     <ComplaintList></ComplaintList>
