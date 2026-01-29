@@ -189,7 +189,7 @@ export default function ComplaintList() {
                     </div>
                   </div>
 
-                  {/* Images */}
+                  {/* Images
                   {c.images && c.images.length > 0 && (
                     <div className="px-5 py-3 border-b border-gray-100">
                       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -203,8 +203,49 @@ export default function ComplaintList() {
                         ))}
                       </div>
                     </div>
-                  )}
+                  )} */}
 
+{/* Flat Info Display */}
+{c.flat_number && (
+  <div className="mt-2 flex items-center gap-2 text-sm">
+    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+    </svg>
+    <span className="text-gray-600">Flat:</span>
+    <span className="font-medium text-gray-800">
+      {c.flat_number}
+      {c.floor_number && ` (Floor ${c.floor_number})`}
+    </span>
+  </div>
+)}
+
+                              {/* Images Preview */}
+            {c.images && c.images.length > 0 && (
+              <div className="p-5 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-700 mb-3">Attachments ({c.images.length})</p>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {c.images.map((imageUrl:string, index:number) => (
+                    <div key={index} className="flex-shrink-0">
+                      <a
+                        href={imageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Complaint ${c.complaint_id} - Image ${index + 1}`}
+                          className="w-20 h-20 object-cover rounded-lg border border-gray-200 hover:border-blue-400 transition-colors"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
+                          }}
+                        />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
                   {/* Actions Footer */}
                   <div className="p-4 bg-white">
                     {/* Verification Section */}

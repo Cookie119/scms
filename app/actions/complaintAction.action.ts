@@ -10,12 +10,33 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 // Get all complaints
 export async function showcomplaints() {
   try {
-    const complaints = await sql`
-      SELECT * FROM complaints 
-      WHERE deleted_at IS NULL 
-      ORDER BY created_at DESC
-    `;
-    return complaints;
+const complaints = await sql`
+    SELECT 
+      c.complaint_id,
+      c.user_id,
+      c.category_id,
+      c.title,
+      c.description,
+      c.priority_request,
+      c.status_id,
+      c.assigned_to,
+      c.images,
+      c.flat_id,
+      c.created_at,
+      c.updated_at,
+      c.deleted_at,
+      c.is_real_complaint,
+      c.verification_status,
+      -- Get flat details from flats table
+      f.flat_number,
+      f.floor_number
+    FROM public.complaints c
+    LEFT JOIN public.flats f ON c.flat_id = f.id
+      AND c.deleted_at IS NULL
+    ORDER BY c.created_at DESC
+  `;
+
+  return complaints;
   } catch (error) {
     console.error("Error fetching complaints:", error);
     return [];

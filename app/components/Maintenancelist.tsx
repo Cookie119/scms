@@ -322,20 +322,46 @@ export default function Maintenancelist() {
                   </p>
                 )}
 
-                {/* Images Section */}
-                {data.images && data.images.length > 0 && (
-                  <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                    {data.images.map((img: string) => (
-                      <div key={img} className="flex-shrink-0 relative">
+{/* Flat Info Display */}
+{data.flat_number && (
+  <div className="mt-2 flex items-center gap-2 text-sm">
+    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+    </svg>
+    <span className="text-gray-600">Flat:</span>
+    <span className="font-medium text-gray-800">
+      {data.flat_number}
+      {data.floor_number && ` (Floor ${data.floor_number})`}
+    </span>
+  </div>
+)}
+                              {/* Images Preview */}
+            {data.images && data.images.length > 0 && (
+              <div className="p-5 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-700 mb-3">Attachments ({data.images.length})</p>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {data.images.map((imageUrl:string, index:number) => (
+                    <div key={index} className="flex-shrink-0">
+                      <a
+                        href={imageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
                         <img
-                          src={img}
-                          alt="Complaint image"
-                          className="w-20 h-20 object-cover rounded-lg border border-gray-100 bg-gray-50"
+                          src={imageUrl}
+                          alt={`Complaint ${data.complaint_id} - Image ${index + 1}`}
+                          className="w-20 h-20 object-cover rounded-lg border border-gray-200 hover:border-blue-400 transition-colors"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/placeholder-image.jpg";
+                          }}
                         />
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
                 {/* Action Section */}
                 <div className="mt-auto pt-4 border-t border-gray-100">
