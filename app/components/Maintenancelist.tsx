@@ -302,17 +302,19 @@ export default function Maintenancelist() {
     <div className="flex items-center gap-3">
       <div className="h-10 w-1 bg-[#F15A29] rounded-full"></div>
       <div>
-        <p className="text-sm text-gray-500">Open Requests</p>
-        <p className="text-2xl font-bold text-[#0B3C66]">{listdata.length}</p>
+        <p className="text-sm text-gray-500">Verified Open Requests</p>
+        <p className="text-2xl font-bold text-[#0B3C66]">
+          {listdata.filter(data => data.verification_status === 1 && data.status_id === 1).length}
+        </p>
       </div>
     </div>
     
     {/* Optional filters or actions */}
-    <div className="flex gap-2">
+    {/* <div className="flex gap-2">
       <button className="px-4 py-2 text-sm font-medium text-[#0B3C66] bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
         Filter
       </button>
-    </div>
+    </div> */}
   </div>
 
   {/* Loading State */}
@@ -324,22 +326,34 @@ export default function Maintenancelist() {
       </div>
     </div>
   ) : (
-    /* Grid Layout */
+    /* Grid Layout - Only show verified complaints (verification_status = 1) */
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {listdata.map((data) => (
+      {listdata
+        .filter(data => data.verification_status === 1 && data.status_id === 1)
+        .map((data) => (
         <div
           key={data.complaint_id}
           className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-xl hover:border-[#0B3C66]/20 transition-all duration-300 flex flex-col h-full group"
         >
-          {/* Card Header with Accent */}
+          {/* Card Header with Accent and Verification Badge */}
           <div className="relative p-6 pb-4">
             {/* Top accent line */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0B3C66] via-[#F15A29] to-[#0B3C66]"></div>
             
             <div className="flex items-start justify-between gap-3">
-              <h3 className="text-lg font-bold text-[#1E293B] line-clamp-2 flex-1 group-hover:text-[#0B3C66] transition-colors">
-                {data.title}
-              </h3>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    VERIFIED
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold text-[#1E293B] line-clamp-2 group-hover:text-[#0B3C66] transition-colors">
+                  {data.title}
+                </h3>
+              </div>
               
               {/* Badge Stack */}
               <div className="flex flex-col items-end gap-2 flex-shrink-0">
@@ -455,8 +469,8 @@ export default function Maintenancelist() {
     </div>
   )}
 
-  {/* Empty State */}
-  {!loading && listdata.length === 0 && (
+  {/* Empty State - Only show if no verified complaints */}
+  {!loading && listdata.filter(data => data.verification_status === 1).length === 0 && (
     <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border-2 border-dashed border-gray-200 shadow-sm">
       <div className="bg-gradient-to-br from-[#0B3C66]/10 to-[#F15A29]/10 p-6 rounded-full mb-6">
         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0B3C66" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -464,12 +478,20 @@ export default function Maintenancelist() {
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
         </svg>
       </div>
-      <h3 className="text-xl font-bold text-[#1E293B] mb-2">All Caught Up!</h3>
-      <p className="text-gray-500 max-w-sm">There are no pending complaints to assign at the moment.</p>
+      <h3 className="text-xl font-bold text-[#1E293B] mb-2">No Verified Complaints</h3>
+      <p className="text-gray-500 max-w-sm">
+        {listdata.length > 0 
+          ? `There are ${listdata.length} unverified complaints pending verification.` 
+          : "There are no complaints to display at the moment."}
+      </p>
+      {listdata.length > 0 && listdata.filter(data => data.verification_status !== 1).length > 0 && (
+        <div className="mt-4 px-4 py-2 bg-amber-50 text-amber-700 rounded-lg text-sm">
+          <span className="font-medium">{listdata.filter(data => data.verification_status !== 1).length} complaint(s) awaiting verification</span>
+        </div>
+      )}
       <div className="mt-6 h-1 w-24 bg-gradient-to-r from-[#0B3C66] via-[#F15A29] to-[#0B3C66] rounded-full"></div>
     </div>
   )}
-</main>
-    </div>
+</main>    </div>
   );
 }
