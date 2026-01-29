@@ -27,6 +27,12 @@ export default withAuth(
     ) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
+    if (
+      path.startsWith("/dashboard/security") &&
+      role !== "Security"
+    ) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
 
     // Otherwise, continue
     return NextResponse.next();

@@ -28,7 +28,7 @@ type User = {
 };
 
 type Role = {
-  role_id: number;  // Changed from id to role_id
+  role_id: number;
   role_name: string;
 };
 
@@ -41,6 +41,7 @@ type Flat = {
 export default function UserManagement() {
   // State
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [flats, setFlats] = useState<Flat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +49,10 @@ export default function UserManagement() {
   const [showForm, setShowForm] = useState(false);
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage, setUsersPerPage] = useState(10);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -78,8 +83,10 @@ export default function UserManagement() {
       // Filter out deleted users
       const activeUsers = usersData.filter((user: any) => !user.deleted_at);
       setUsers(activeUsers);
+      setFilteredUsers(activeUsers);
       setRoles(rolesData);
       setFlats(flatsData);
+      setCurrentPage(1); // Reset to first page when loading new data
     } catch (error) {
       console.error("Failed to load data:", error);
       setMessage({ type: 'error', text: "Failed to load data. Please try again." });
@@ -93,14 +100,16 @@ export default function UserManagement() {
     setMessage(null);
     
     if (!search.trim()) {
-      loadData();
+      setFilteredUsers(users);
+      setCurrentPage(1);
       return;
     }
     
     setLoading(true);
     try {
       const results = await searchUsers(search);
-      setUsers(results);
+      setFilteredUsers(results);
+      setCurrentPage(1);
       setMessage({ 
         type: 'success', 
         text: `Found ${results.length} user(s) matching "${search}"` 
@@ -140,7 +149,7 @@ export default function UserManagement() {
       password: "",
       name: user.name,
       phone_number: user.phone_number || "",
-      role_id: user.role_id.toString(), // role_id is a number
+      role_id: user.role_id.toString(),
       flat_id: user.flat_id?.toString() || ""
     });
     
@@ -194,7 +203,7 @@ export default function UserManagement() {
         updateForm.append("email", formData.email.trim());
         updateForm.append("name", formData.name.trim());
         updateForm.append("phone_number", formData.phone_number.trim());
-        updateForm.append("role_id", formData.role_id); // This should be a number string like "2"
+        updateForm.append("role_id", formData.role_id);
         updateForm.append("flat_id", formData.flat_id);
         
         if (formData.password.trim()) {
@@ -215,7 +224,7 @@ export default function UserManagement() {
         form.append("password", formData.password);
         form.append("name", formData.name.trim());
         form.append("phone_number", formData.phone_number.trim());
-        form.append("role_id", formData.role_id); // This should be a number string like "2"
+        form.append("role_id", formData.role_id);
         form.append("flat_id", formData.flat_id);
 
         const result = await addUserForm(form);
@@ -261,6 +270,39 @@ export default function UserManagement() {
     return colors[roleId] || "bg-gray-100 text-gray-800";
   };
 
+  // Pagination calculations
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  // Pagination handlers
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Users per page handler
+  const handleUsersPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = parseInt(e.target.value);
+    setUsersPerPage(value);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
@@ -287,7 +329,7 @@ export default function UserManagement() {
           <div className="text-sm text-gray-500">Action</div>
           <button
             onClick={handleAddUser}
-            className="mt-2 flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            className="mt-2 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -328,7 +370,8 @@ export default function UserManagement() {
                 type="button" 
                 onClick={() => {
                   setSearch("");
-                  loadData();
+                  setFilteredUsers(users);
+                  setCurrentPage(1);
                 }}
                 className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
@@ -502,12 +545,33 @@ export default function UserManagement() {
 
       {/* Users Table */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        {/* Table Header */}
+        {/* Table Header with Pagination Controls */}
         <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold text-gray-800">Users List</h2>
-            <div className="text-sm text-gray-500">
-              Total: {users.length} user(s)
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-800">Users List</h2>
+              <p className="text-sm text-gray-500">
+                Showing {indexOfFirstUser + 1}-{Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} user(s)
+              </p>
+            </div>
+            
+            {/* Users per page selector */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600">Show:</label>
+                <select
+                  value={usersPerPage}
+                  onChange={handleUsersPerPageChange}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+                <span className="text-sm text-gray-600">per page</span>
+              </div>
             </div>
           </div>
         </div>
@@ -520,7 +584,7 @@ export default function UserManagement() {
               <span className="text-gray-600">Loading users...</span>
             </div>
           </div>
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <div className="p-8 text-center">
             <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -538,84 +602,191 @@ export default function UserManagement() {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="p-4 text-left text-sm font-semibold text-gray-700">User Details</th>
-                  <th className="p-4 text-left text-sm font-semibold text-gray-700">Role</th>
-                  <th className="p-4 text-left text-sm font-semibold text-gray-700">Flat</th>
-                  <th className="p-4 text-left text-sm font-semibold text-gray-700">Created</th>
-                  <th className="p-4 text-left text-sm font-semibold text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {users.map(user => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    {/* User Details */}
-                    <td className="p-4">
-                      <div>
-                        <div className="font-medium text-gray-900">{user.name}</div>
-                        <div className="text-sm text-gray-500 mt-1">{user.email}</div>
-                        {user.phone_number && (
-                          <div className="text-sm text-gray-500 mt-1">📞 {user.phone_number}</div>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Role */}
-                    <td className="p-4">
-                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${getRoleColor(user.role_id)}`}>
-                        {user.role_name || getRoleName(user.role_id)}
-                      </span>
-                    </td>
-
-                    {/* Flat */}
-                    <td className="p-4">
-                      {user.flat_number ? (
-                        <div className="text-sm">
-                          <span className="font-medium">Flat {user.flat_number}</span>
-                          {user.floor_number && (
-                            <span className="text-gray-500 ml-2">(Floor {user.floor_number})</span>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="p-4 text-left text-sm font-semibold text-gray-700">User Details</th>
+                    <th className="p-4 text-left text-sm font-semibold text-gray-700">Role</th>
+                    <th className="p-4 text-left text-sm font-semibold text-gray-700">Flat</th>
+                    <th className="p-4 text-left text-sm font-semibold text-gray-700">Created</th>
+                    <th className="p-4 text-left text-sm font-semibold text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {currentUsers.map(user => (
+                    <tr key={user.id} className="hover:bg-gray-50">
+                      {/* User Details */}
+                      <td className="p-4">
+                        <div>
+                          <div className="font-medium text-gray-900">{user.name}</div>
+                          <div className="text-sm text-gray-500 mt-1">{user.email}</div>
+                          {user.phone_number && (
+                            <div className="text-sm text-gray-500 mt-1">📞 {user.phone_number}</div>
                           )}
                         </div>
-                      ) : (
-                        <span className="text-gray-400 text-sm">Not assigned</span>
-                      )}
-                    </td>
+                      </td>
 
-                    {/* Created Date */}
-                    <td className="p-4">
-                      <div className="text-sm text-gray-500">
-                        {formatDate(user.created_at)}
-                      </div>
-                    </td>
+                      {/* Role */}
+                      <td className="p-4">
+                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${getRoleColor(user.role_id)}`}>
+                          {user.role_name || getRoleName(user.role_id)}
+                        </span>
+                      </td>
 
-                    {/* Actions */}
-                    <td className="p-4">
-                      <div className="flex gap-2">
+                      {/* Flat */}
+                      <td className="p-4">
+                        {user.flat_number ? (
+                          <div className="text-sm">
+                            <span className="font-medium">Flat {user.flat_number}</span>
+                            {user.floor_number && (
+                              <span className="text-gray-500 ml-2">(Floor {user.floor_number})</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-sm">Not assigned</span>
+                        )}
+                      </td>
+
+                      {/* Created Date */}
+                      <td className="p-4">
+                        <div className="text-sm text-gray-500">
+                          {formatDate(user.created_at)}
+                        </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="p-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(user)}
+                            className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(user.id)}
+                            className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="border-t border-gray-200 p-6">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  {/* Previous Button */}
+                  <button
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 1}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg border ${
+                      currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="flex gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNumber;
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNumber = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i;
+                      } else {
+                        pageNumber = currentPage - 2 + i;
+                      }
+
+                      if (pageNumber < 1 || pageNumber > totalPages) return null;
+
+                      return (
                         <button
-                          onClick={() => handleEdit(user)}
-                          className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                          key={pageNumber}
+                          onClick={() => handlePageChange(pageNumber)}
+                          className={`px-3 py-2 text-sm font-medium rounded-lg ${
+                            currentPage === pageNumber
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                          }`}
                         >
-                          Edit
+                          {pageNumber}
                         </button>
-                        <button
-                          onClick={() => handleDelete(user.id)}
-                          className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      );
+                    })}
+
+                    {/* Ellipsis for many pages */}
+                    {totalPages > 5 && currentPage < totalPages - 2 && (
+                      <span className="px-3 py-2 text-gray-500">...</span>
+                    )}
+
+                    {/* Last page */}
+                    {totalPages > 5 && currentPage < totalPages - 2 && (
+                      <button
+                        onClick={() => handlePageChange(totalPages)}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg ${
+                          currentPage === totalPages
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {totalPages}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg border ${
+                      currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+
+                {/* Go to page input */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Go to:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={totalPages}
+                    value={currentPage}
+                    onChange={(e) => {
+                      const page = parseInt(e.target.value);
+                      if (page >= 1 && page <= totalPages) {
+                        handlePageChange(page);
+                      }
+                    }}
+                    className="w-16 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
-
     </div>
   );
 }

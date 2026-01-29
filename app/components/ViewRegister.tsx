@@ -11,6 +11,11 @@ export default function AdminVisitorLog() {
   const [stats, setStats] = useState<any>(null);
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
   const [showDetails, setShowDetails] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [entriesPerPage] = useState(10);
+  const [totalEntries, setTotalEntries] = useState(0);
 
   async function loadEntries() {
     try {
@@ -34,6 +39,9 @@ export default function AdminVisitorLog() {
           data = await showEntries();
       }
       setEntries(data);
+      setTotalEntries(data.length);
+      // Reset to first page when data changes
+      setCurrentPage(1);
     } catch (error) {
       console.error("Failed to load entries:", error);
     } finally {
@@ -54,6 +62,71 @@ export default function AdminVisitorLog() {
     loadEntries(); 
     loadStats();
   }, [view, searchTerm]);
+
+  // Calculate pagination values
+  const indexOfLastEntry = currentPage * entriesPerPage;
+  const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
+  const currentEntries = entries.slice(indexOfFirstEntry, indexOfLastEntry);
+  const totalPages = Math.ceil(totalEntries / entriesPerPage);
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pageNumbers.push(i);
+        }
+      } else {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        pageNumbers.push(currentPage - 1);
+        pageNumbers.push(currentPage);
+        pageNumbers.push(currentPage + 1);
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      }
+    }
+    
+    return pageNumbers;
+  };
+
+  // Handle page change
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top of table
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handle next page
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Handle previous page
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const handleViewDetails = (entry: any) => {
     setSelectedEntry(entry);
@@ -274,7 +347,7 @@ export default function AdminVisitorLog() {
                     </div>
                   </td>
                 </tr>
-              ) : entries.length === 0 ? (
+              ) : currentEntries.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-gray-500">
                     <svg className="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,7 +358,7 @@ export default function AdminVisitorLog() {
                   </td>
                 </tr>
               ) : (
-                entries.map((entry) => (
+                currentEntries.map((entry) => (
                   <tr key={entry.entry_id} className="hover:bg-gray-50">
                     <td className="p-4">
                       <div className="font-mono text-sm text-gray-500">#{entry.entry_id}</div>
@@ -375,10 +448,95 @@ export default function AdminVisitorLog() {
           </table>
         </div>
 
-        {/* Footer */}
+        {/* Pagination */}
+        {totalEntries > entriesPerPage && !loading && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-6 pt-6 border-t border-gray-200">
+            <div className="text-sm text-gray-600 mb-4 sm:mb-0">
+              Showing {indexOfFirstEntry + 1} to {Math.min(indexOfLastEntry, totalEntries)} of {totalEntries} entries
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {/* Previous Button */}
+              <button
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg flex items-center gap-1 ${
+                  currentPage === 1
+                    ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                    : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center space-x-1">
+                {getPageNumbers().map((page, index) => (
+                  page === '...' ? (
+                    <span key={`ellipsis-${index}`} className="px-3 py-1.5 text-gray-500">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page as number)}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg min-w-[40px] ${
+                        currentPage === page
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )
+                ))}
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg flex items-center gap-1 ${
+                  currentPage === totalPages
+                    ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                    : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Next
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Page Size Selector (Optional - you can add this if needed) */}
+            <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600">
+              <span>Show:</span>
+              <select
+                className="border border-gray-300 rounded-lg px-2 py-1 text-sm bg-white"
+                value={entriesPerPage}
+                onChange={(e) => {
+                  // You can add logic to change entries per page here
+                }}
+                disabled
+              >
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span>per page</span>
+            </div>
+          </div>
+        )}
+
+        {/* Footer - Updated with pagination info */}
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between text-sm text-gray-500">
           <div>
-            Showing {entries.length} of {entries.length} entries
+            Page {currentPage} of {totalPages} • Showing {currentEntries.length} entries on this page
           </div>
           <div className="mt-2 sm:mt-0">
             Data as of {new Date().toLocaleTimeString()}

@@ -29,7 +29,7 @@ export default function userDashboard() {
      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">User Board</h1>
+            <h1 className="text-xl font-bold text-gray-900">Staff Board</h1>
             <p className="text-xs text-gray-500">View and assign pending complaints</p>
           </div>
           <LogoutButton></LogoutButton>

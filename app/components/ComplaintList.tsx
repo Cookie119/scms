@@ -181,7 +181,7 @@ export default function ComplaintList() {
                     {/* Meta Tags */}
                     <div className="flex flex-wrap gap-2 mt-3">
                         <span className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium ${getPriorityInfo(c.priority)}`}>
-                           Priority: {c.priority || 'Normal'}
+                           Priority: {c.priority_request || 'Normal'}
                         </span>
                         <span className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-medium ${verificationInfo.color}`}>
                            {verificationInfo.text}
@@ -207,7 +207,7 @@ export default function ComplaintList() {
 
 {/* Flat Info Display */}
 {c.flat_number && (
-  <div className="mt-2 flex items-center gap-2 text-sm">
+  <div className="pl-6 mt-4 flex items-center gap-2 text-sm">
     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
     </svg>

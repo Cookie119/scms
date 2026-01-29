@@ -2,11 +2,20 @@
 
 import { signOut } from "next-auth/react";
 
+const theme = {
+  primary: "#0B3C66",      // Deep Blue
+  accent: "#F15A29",       // Vibrant Orange
+  background: "#F8FAFC",   // Light gray
+  textPrimary: "#1E293B",  // Dark slate
+};
+
+
 export default function LogoutButton() {
   return (
     <button
       onClick={() => signOut({ callbackUrl: "/" })}
-      className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+      className=" flex items-center gap-2 px-4 py-2  border border-gray-200 text-gray-50 text-sm font-medium rounded-lg hover:bg-grey-50 transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+    style={{ backgroundColor: theme.accent }}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

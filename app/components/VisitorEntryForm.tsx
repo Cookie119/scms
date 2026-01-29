@@ -182,7 +182,7 @@ export default function VisitorEntryForm() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg disabled:bg-gray-400 transition duration-200 flex items-center"
+              className="bg-[#F15A29] hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg disabled:bg-gray-400 transition duration-200 flex items-center"
             >
               {loading ? (
                 <>
@@ -210,19 +210,19 @@ export default function VisitorEntryForm() {
             <div className="flex border border-gray-300 rounded-lg overflow-hidden">
               <button
                 onClick={() => setView("current")}
-                className={`px-4 py-2 text-sm font-medium ${view === "current" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                className={`px-4 py-2 text-sm font-medium ${view === "current" ? "bg-[#0B3C66] text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
               >
                 Currently Inside
               </button>
               <button
                 onClick={() => setView("today")}
-                className={`px-4 py-2 text-sm font-medium ${view === "today" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                className={`px-4 py-2 text-sm font-medium ${view === "today" ? "bg-[#0B3C66] text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
               >
                 Today's Log
               </button>
               <button
                 onClick={() => setView("all")}
-                className={`px-4 py-2 text-sm font-medium ${view === "all" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+                className={`px-4 py-2 text-sm font-medium ${view === "all" ? "bg-[#0B3C66] text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
               >
                 All Entries
               </button>
