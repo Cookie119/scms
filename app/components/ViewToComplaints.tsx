@@ -226,7 +226,7 @@ export default function UserComplaintsList() {
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              Resolved ({resolvedCount})
+              History ({resolvedCount})
             </button>
           </nav>
         </div>
@@ -372,14 +372,14 @@ export default function UserComplaintsList() {
                           </span>
                         </div>
                         
-                        {complaint.updated_at && complaint.updated_at !== complaint.created_at && (
+                        {/* {complaint.updated_at && complaint.updated_at !== complaint.created_at && (
                           <div className="flex justify-between items-center">
                             <span className="text-gray-500">Last Updated</span>
                             <span className="font-medium text-gray-800">
                               {formatDate(complaint.updated_at)}
                             </span>
                           </div>
-                        )}
+                        )} */}
 
                         {complaint.assigned_to && (
                           <div className="pt-2 border-t border-gray-200">
@@ -403,12 +403,12 @@ export default function UserComplaintsList() {
 
                       {/* Actions */}
                       <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200">
-                        <button
+                        {/* <button
                           onClick={() => alert(`View details for complaint #${complaint.complaint_id}`)}
                           className="flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
                         >
                           View Details
-                        </button>
+                        </button> */}
 
                       </div>
                     </div>
