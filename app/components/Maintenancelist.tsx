@@ -270,30 +270,6 @@ export default function Maintenancelist() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-{/* Header */}
-<header 
-  className="sticky top-0 z-10 shadow-sm transition-all"
-  style={{ backgroundColor: "#F8FAF" }} // Deep Blue
->
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-    
-    {/* Logo & Title Group */}
-    <div className="flex items-center gap-3">
-      <img 
-        src="https://z-cdn-media.chatglm.cn/files/192a4fdb-d4cb-46f4-8758-a5e126e6f439.png?auth_key=1869672679-7040aa52e74141bcacba84068b6a23f9-0-21c361a18cc05c193484bd480fbf9c4f" 
-        alt="Resolve Logo" 
-        className="h-10 w-auto object-contain"
-      />
-      <div>
-        <h1 className="text-xl font-bold text-[#1E293B] leading-tight">Maintenance Board</h1>
-        <p className="text-xs text-[#1E293B]">View and assign pending complaints</p>
-      </div>
-    </div>
-
-    <LogoutButton />
-  </div>
-</header>
-
   
 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   

@@ -8,6 +8,7 @@ import CategoryManagement from "@/app/components/CategoryManagement";
 import UserManagement from "@/app/components/UserManagement";
 import LogoutButton from "@/app/components/LogoutButton";
 
+
 // Navigation items with icons
 const navItems = [
   { id: "complaints", label: "Complaint List", icon: "📋", description: "View and assign pending complaints" },
@@ -108,7 +109,7 @@ export default function AdminDashboard() {
             {/* User Profile */}
             <div className="flex items-center gap-3">
               <div className="hidden md:block text-right">
-                <p className="text-sm font-medium text-textPrimary">{"Admin"}</p>
+                <p className="text-sm font-medium text-textPrimary">{session.user.email}</p>
                 <p className="text-xs text-gray-500">Administrator</p>
               </div>
               

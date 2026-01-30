@@ -11,9 +11,9 @@ import LogoutButton from "@/app/components/LogoutButton";
 // Navigation items with icons
 const navItems = [
   { id: "complaints", label: "Complaint List", icon: "📋", description: "View and assign pending complaints" },
-  { id: "register", label: "View Register", icon: "📝", description: "View Registration Details" },
+  // { id: "register", label: "View Register", icon: "📝", description: "View Registration Details" },
   { id: "categories", label: "Category Management", icon: "🏷️", description: "Manage Complaint Categories" },
-  { id: "users", label: "User Management", icon: "👥", description: "Manage System Users" },
+  // { id: "users", label: "User Management", icon: "👥", description: "Manage System Users" },
 ];
 
 export default function AdminDashboard() {
@@ -147,7 +147,7 @@ export default function AdminDashboard() {
         }}
       />
       <div>
-        <h2 className="font-bold text-textPrimary">Resolve Admin</h2>
+        <h2 className="font-bold text-textPrimary">Resolve Staff</h2>
         <p className="text-xs text-gray-500">Management Dashboard</p>
       </div>
     </div>
@@ -231,14 +231,14 @@ export default function AdminDashboard() {
           <div className="p-4 sm:p-6 lg:p-8">
             {/* Stats Cards */}
             <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard
+              {/* <StatCard
                 title="Total Complaints"
                 value="1,234"
                 change="+12%"
                 icon="📋"
                 color="primary"
-              />
-              <StatCard
+              /> */}
+              {/* <StatCard
                 title="Pending"
                 value="56"
                 change="+5%"
@@ -258,16 +258,16 @@ export default function AdminDashboard() {
                 change="+3%"
                 icon="👥"
                 color="purple"
-              />
+              /> */}
             </div>
 
             {/* Main Content Area */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="p-6">
                 {activeTab === "complaints" && <ComplaintList />}
-                {activeTab === "register" && <ViewRegister />}
+                {/* {activeTab === "register" && <ViewRegister />} */}
                 {activeTab === "categories" && <CategoryManagement />}
-                {activeTab === "users" && <UserManagement />}
+                {/* {activeTab === "users" && <UserManagement />} */}
               </div>
             </div>
           </div>

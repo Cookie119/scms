@@ -2,37 +2,49 @@
 
 import { signOut } from "next-auth/react";
 
-const theme = {
-  primary: "#0B3C66",      // Deep Blue
-  accent: "#F15A29",       // Vibrant Orange
-  background: "#F8FAFC",   // Light gray
-  textPrimary: "#1E293B",  // Dark slate
-};
+interface LogoutButtonProps {
+  variant?: 'primary' | 'accent';
+  className?: string;
+}
 
+export default function LogoutButton({ variant = 'primary', className = '' }: LogoutButtonProps) {
+  if (variant === 'accent') {
+    return (
+      <button
+        onClick={() => signOut({ callbackUrl: "/" })}
+        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 ${className}`}
+        style={{ backgroundColor: "#F15A29" }}
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span>Logout</span>
+      </button>
+    );
+  }
 
-export default function LogoutButton() {
   return (
     <button
       onClick={() => signOut({ callbackUrl: "/" })}
-      className=" flex items-center gap-2 px-4 py-2  border border-gray-200 text-gray-50 text-sm font-medium rounded-lg hover:bg-grey-50 transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-    style={{ backgroundColor: theme.accent }}
+      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 font-bold text-sm transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95 ${className}`}
+      style={{
+        borderColor: "#0B3C66",
+        color: "#0B3C66",
+        backgroundColor: "transparent"
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = "#0B3C66";
+        e.currentTarget.style.color = "white";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = "transparent";
+        e.currentTarget.style.color = "#0B3C66";
+      }}
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-        <polyline points="16 17 21 12 16 7" />
-        <line x1="21" y1="12" x2="9" y2="12" />
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
       </svg>
-      Logout
+      <span>Logout</span>
     </button>
   );
 }

@@ -77,71 +77,127 @@ export default function UserDashboard() {
                 alt="Resolve Logo" 
                 className="h-10 sm:h-12 w-auto object-contain"
               />
+              <div className="hidden md:block">
+                <h1 className="text-xl font-bold leading-tight" style={{ color: theme.textPrimary }}></h1>
+              </div>
             </div>
 
-            {/* Desktop Actions */}
-            <div className="hidden md:flex items-center gap-4">
+            {/* Right side: User Profile, Email, and Actions */}
+            <div className="flex items-center gap-4">
+              {/* User Email and Profile - Desktop */}
+              <div className="hidden md:flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-sm font-medium" style={{ color: theme.textPrimary }}>
+                    {session.user.email}
+                  </p>
+                  <p className="text-xs opacity-75" style={{ color: theme.textPrimary }}>
+                    User Account
+                  </p>
+                </div>
+                
+                {/* Profile Avatar */}
+                <div className="relative">
+                  <div 
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold shadow-md"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${theme.primary}, #1E5A9C)`
+                    }}
+                  >
+                    {session.user.email?.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                </div>
+              </div>
+
+              {/* Desktop Actions */}
+              <div className="hidden md:flex items-center gap-3">
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 font-bold text-sm transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
+                  style={{
+                    borderColor: theme.primary,
+                    color: theme.primary,
+                    backgroundColor: "transparent"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.primary;
+                    e.currentTarget.style.color = "white";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = theme.primary;
+                  }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Logout</span>
+                </button>
+                
+                <a 
+                  href="user/complaint"
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+                  style={{ backgroundColor: theme.accent }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>New Complaint</span>
+                </a>
+              </div>
+
+              {/* Mobile Menu Button */}
               <button
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 font-bold text-sm transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 active:scale-95"
                 style={{
-                  borderColor: theme.primary,
-                  color: theme.primary,
-                  backgroundColor: "transparent"
+                  backgroundColor: mobileMenuOpen ? theme.primary : "transparent",
+                  color: mobileMenuOpen ? "white" : theme.primary,
+                  border: `2px solid ${theme.primary}`
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = theme.primary;
-                  e.currentTarget.style.color = "white";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = theme.primary;
-                }}
+                aria-label="Toggle menu"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span>Logout</span>
+                {mobileMenuOpen ? (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                )}
               </button>
-              
-              <a 
-                href="user/complaint"
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
-                style={{ backgroundColor: theme.accent }}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>New Complaint</span>
-              </a>
             </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 active:scale-95"
-              style={{
-                backgroundColor: mobileMenuOpen ? theme.primary : "transparent",
-                color: mobileMenuOpen ? "white" : theme.primary,
-                border: `2px solid ${theme.primary}`
-              }}
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </button>
           </div>
 
           {/* Mobile Dropdown Menu */}
           {mobileMenuOpen && (
             <div className="md:hidden py-4 space-y-3 border-t" style={{ borderTopColor: `${theme.primary}20` }}>
+              {/* Mobile User Info */}
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${theme.primary}, #1E5A9C)`
+                    }}
+                  >
+                    {session.user.email?.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: theme.textPrimary }}>
+                      {session.user.email}
+                    </p>
+                    <p className="text-xs opacity-75" style={{ color: theme.textPrimary }}>
+                      User Account
+                    </p>
+                  </div>
+                </div>
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              </div>
+              
+              <div className="h-px bg-gray-200 mx-4"></div>
+              
               <a 
                 href="user/complaint"
                 className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-bold text-white shadow-md active:scale-95 transition-all duration-200"
@@ -182,6 +238,57 @@ export default function UserDashboard() {
           <ViewToComplaints />
         </div>
       </main>
+
+      {/* Mobile Bottom Bar (Alternative approach) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg py-3 px-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div 
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+              style={{ 
+                background: `linear-gradient(135deg, ${theme.primary}, #1E5A9C)`
+              }}
+            >
+              {session.user.email?.charAt(0).toUpperCase()}
+            </div>
+            <div className="max-w-[120px]">
+              <p className="text-xs font-medium truncate" style={{ color: theme.textPrimary }}>
+                {session.user.email}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <a 
+              href="user/complaint"
+              className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-bold text-white"
+              style={{ backgroundColor: theme.accent }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>New</span>
+            </a>
+            
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="flex items-center gap-1 px-3 py-2 rounded-lg border text-xs font-bold"
+              style={{
+                borderColor: theme.primary,
+                color: theme.primary
+              }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Add padding for mobile bottom bar */}
+      <div className="md:hidden pb-20"></div>
 
     </div>
   );
