@@ -1,6 +1,10 @@
 "use server";
 
 import { pool } from "@/app/backend/db";
+import bcrypt from 'bcrypt';
+
+// Set salt rounds for password hashing
+const SALT_ROUNDS = 10;
 
 export type UserInput = {
   email: string;
@@ -14,6 +18,25 @@ export type UserInput = {
 export type UserUpdate = Partial<UserInput> & {
   id: number;
 };
+
+/* ===== PASSWORD HELPER FUNCTIONS ===== */
+
+// Hash password
+async function hashPassword(password: string): Promise<string> {
+  return await bcrypt.hash(password, SALT_ROUNDS);
+}
+
+// Verify password
+async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+  return await bcrypt.compare(password, hashedPassword);
+}
+
+// Check if password needs re-hashing (if using older hash)
+async function needsRehash(password: string): Promise<boolean> {
+  // Check if password is already hashed
+  const bcryptHashRegex = /^\$2[aby]\$[0-9]{2}\$[./A-Za-z0-9]{53}$/;
+  return !bcryptHashRegex.test(password);
+}
 
 /* ===== USER CRUD OPERATIONS ===== */
 
@@ -42,9 +65,80 @@ export async function showusers() {
       LEFT JOIN public.flats f ON u.flat_id = f.id
       ORDER BY u.created_at DESC
     `);
-    return result.rows;
+    
+    // Remove password from response for security
+    const usersWithoutPasswords = result.rows.map(user => {
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    });
+    
+    return usersWithoutPasswords;
   } catch (error) {
     console.error("Error fetching users:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Get user by email for authentication
+export async function getUserByEmail(email: string) {
+  const client = await pool.connect();
+  
+  try {
+    const result = await client.query(
+      `SELECT 
+        u.id,
+        u.email,
+        u.password,
+        u.role_id,
+        u.name,
+        u.phone_number,
+        u.flat_id,
+        r.role_name
+      FROM public.users u
+      LEFT JOIN public.roles r ON u.role_id = r.role_id
+      WHERE u.email = $1 AND u.deleted_at IS NULL`,
+      [email.toLowerCase().trim()]
+    );
+    
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching user by email:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Get user by ID
+export async function getUserById(id: number) {
+  const client = await pool.connect();
+  
+  try {
+    const result = await client.query(
+      `SELECT 
+        u.id,
+        u.email,
+        u.role_id,
+        u.name,
+        u.phone_number,
+        u.flat_id,
+        u.created_at,
+        u.updated_at,
+        r.role_name,
+        f.flat_number,
+        f.floor_number
+      FROM public.users u
+      LEFT JOIN public.roles r ON u.role_id = r.role_id
+      LEFT JOIN public.flats f ON u.flat_id = f.id
+      WHERE u.id = $1 AND u.deleted_at IS NULL`,
+      [id]
+    );
+    
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching user by ID:", error);
     throw error;
   } finally {
     client.release();
@@ -90,7 +184,7 @@ export async function getFlats() {
   }
 }
 
-// Add new user
+// Add new user with password hashing
 export async function addusers(userData: UserInput) {
   const client = await pool.connect();
   
@@ -100,6 +194,11 @@ export async function addusers(userData: UserInput) {
     if (!userData.password?.trim()) throw new Error("Password is required");
     if (!userData.name?.trim()) throw new Error("Name is required");
     if (!userData.role_id) throw new Error("Role is required");
+    
+    // Validate password strength
+    if (userData.password.length < 8) {
+      throw new Error("Password must be at least 8 characters long");
+    }
     
     // Check if email exists
     const existingUser = await client.query(
@@ -112,6 +211,9 @@ export async function addusers(userData: UserInput) {
       throw new Error("User with this email already exists");
     }
 
+    // Hash password
+    const hashedPassword = await hashPassword(userData.password);
+
     const result = await client.query(
       `INSERT INTO public.users (
         email, 
@@ -123,10 +225,10 @@ export async function addusers(userData: UserInput) {
         created_at,
         updated_at
       ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id, email, name, role_id`,
+      RETURNING id, email, name, role_id, created_at`,
       [
         userData.email.toLowerCase().trim(),
-        userData.password,
+        hashedPassword,
         userData.role_id,
         userData.name.trim(),
         userData.phone_number?.trim() || null,
@@ -190,7 +292,7 @@ export async function addUserForm(formData: FormData) {
   }
 }
 
-// Update user
+// Update user with password hashing
 export async function updateusers({ id, ...updates }: UserUpdate) {
   const client = await pool.connect();
   
@@ -255,8 +357,15 @@ export async function updateusers({ id, ...updates }: UserUpdate) {
     }
     
     if (updates.password !== undefined && updates.password.trim() !== '') {
+      // Validate new password strength
+      if (updates.password.length < 8) {
+        throw new Error("Password must be at least 8 characters long");
+      }
+      
+      // Hash new password
+      const hashedPassword = await hashPassword(updates.password);
       updateFields.push(`password = $${paramIndex}`);
-      values.push(updates.password);
+      values.push(hashedPassword);
       paramIndex++;
     }
 
@@ -270,7 +379,7 @@ export async function updateusers({ id, ...updates }: UserUpdate) {
       UPDATE public.users 
       SET ${updateFields.join(", ")}, updated_at = CURRENT_TIMESTAMP
       WHERE id = $${paramIndex} AND deleted_at IS NULL
-      RETURNING id, email, name, role_id
+      RETURNING id, email, name, role_id, updated_at
     `;
     
     const result = await client.query(query, values);
@@ -405,6 +514,187 @@ export async function searchUsers(searchTerm: string) {
     return result.rows;
   } catch (error) {
     console.error("Error searching users:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Verify user credentials for login
+export async function verifyCredentials(email: string, password: string) {
+  const client = await pool.connect();
+  
+  try {
+    // Get user with password
+    const result = await client.query(
+      `SELECT 
+        u.id,
+        u.email,
+        u.password,
+        u.role_id,
+        u.name,
+        r.role_name
+      FROM public.users u
+      LEFT JOIN public.roles r ON u.role_id = r.role_id
+      WHERE u.email = $1 AND u.deleted_at IS NULL`,
+      [email.toLowerCase().trim()]
+    );
+    
+    if (result.rows.length === 0) {
+      return { success: false, error: "Invalid email or password" };
+    }
+    
+    const user = result.rows[0];
+    
+    // Verify password
+    const passwordMatches = await verifyPassword(password, user.password);
+    
+    if (!passwordMatches) {
+      return { success: false, error: "Invalid email or password" };
+    }
+    
+    // Check if password needs re-hashing (for older hashes)
+    if (await needsRehash(user.password)) {
+      const newHashedPassword = await hashPassword(password);
+      
+      // Update password in database
+      await client.query(
+        `UPDATE public.users 
+         SET password = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2`,
+        [newHashedPassword, user.id]
+      );
+    }
+    
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = user;
+    
+    return { 
+      success: true, 
+      user: userWithoutPassword 
+    };
+  } catch (error) {
+    console.error("Error verifying credentials:", error);
+    return { 
+      success: false, 
+      error: "Authentication failed" 
+    };
+  } finally {
+    client.release();
+  }
+}
+
+// Get user statistics
+export async function getUserStats() {
+  const client = await pool.connect();
+  
+  try {
+    // Get total users
+    const totalUsersResult = await client.query(
+      `SELECT COUNT(*) as count FROM public.users WHERE deleted_at IS NULL`
+    );
+    
+    // Get users by role
+    const usersByRoleResult = await client.query(`
+      SELECT 
+        r.role_name,
+        COUNT(u.id) as count
+      FROM public.roles r
+      LEFT JOIN public.users u ON r.role_id = u.role_id AND u.deleted_at IS NULL
+      WHERE r.deleted_at IS NULL
+      GROUP BY r.role_id, r.role_name
+      ORDER BY r.role_id
+    `);
+    
+    // Get recent users (last 30 days)
+    const recentUsersResult = await client.query(
+      `SELECT COUNT(*) as count 
+       FROM public.users 
+       WHERE created_at >= CURRENT_DATE - INTERVAL '30 days' 
+       AND deleted_at IS NULL`
+    );
+    
+    return {
+      totalUsers: parseInt(totalUsersResult.rows[0].count) || 0,
+      usersByRole: usersByRoleResult.rows,
+      recentUsers: parseInt(recentUsersResult.rows[0].count) || 0
+    };
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Get dashboard statistics (for your stat cards)
+export async function getDashboardStats() {
+  const client = await pool.connect();
+  
+  try {
+    // Get total complaints
+    const totalComplaintsResult = await client.query(
+      `SELECT COUNT(*) as count FROM public.complaints WHERE deleted_at IS NULL`
+    );
+    
+    // Get active users (users with recent activity or status active)
+    const activeUsersResult = await client.query(
+      `SELECT COUNT(DISTINCT u.id) as count
+       FROM public.users u
+       WHERE u.deleted_at IS NULL 
+       AND (u.last_login_at >= CURRENT_DATE - INTERVAL '30 days' OR u.last_login_at IS NULL)`
+    );
+    
+    // Get total categories
+    const totalCategoriesResult = await client.query(
+      `SELECT COUNT(*) as count FROM public.categories WHERE deleted_at IS NULL`
+    );
+    
+    // Get total users
+    const totalUsersResult = await client.query(
+      `SELECT COUNT(*) as count FROM public.users WHERE deleted_at IS NULL`
+    );
+    
+    // Get pending complaints
+    const pendingComplaintsResult = await client.query(
+      `SELECT COUNT(*) as count 
+       FROM public.complaints 
+       WHERE status = 'pending' AND deleted_at IS NULL`
+    );
+    
+    // Get in progress complaints
+    const inProgressComplaintsResult = await client.query(
+      `SELECT COUNT(*) as count 
+       FROM public.complaints 
+       WHERE status = 'in_progress' AND deleted_at IS NULL`
+    );
+    
+    // Get resolved complaints
+    const resolvedComplaintsResult = await client.query(
+      `SELECT COUNT(*) as count 
+       FROM public.complaints 
+       WHERE status = 'resolved' AND deleted_at IS NULL`
+    );
+    
+    // Get high priority complaints
+    const highPriorityComplaintsResult = await client.query(
+      `SELECT COUNT(*) as count 
+       FROM public.complaints 
+       WHERE priority = 'high' AND deleted_at IS NULL`
+    );
+    
+    return {
+      totalComplaints: parseInt(totalComplaintsResult.rows[0].count) || 0,
+      totalRegisterCount: parseInt(activeUsersResult.rows[0].count) || 0,
+      totalCategory: parseInt(totalCategoriesResult.rows[0].count) || 0,
+      totalUsers: parseInt(totalUsersResult.rows[0].count) || 0,
+      pendingComplaints: parseInt(pendingComplaintsResult.rows[0].count) || 0,
+      inProgressComplaints: parseInt(inProgressComplaintsResult.rows[0].count) || 0,
+      resolvedComplaints: parseInt(resolvedComplaintsResult.rows[0].count) || 0,
+      highPriorityComplaints: parseInt(highPriorityComplaintsResult.rows[0].count) || 0,
+    };
+  } catch (error) {
+    console.error("Error fetching dashboard stats:", error);
     throw error;
   } finally {
     client.release();
