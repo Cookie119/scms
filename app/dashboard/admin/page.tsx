@@ -231,7 +231,7 @@ export default function AdminDashboard() {
         <main className="flex-1 overflow-y-auto bg-background">
           <div className="p-4 sm:p-6 lg:p-8">
             {/* Stats Cards */}
-            <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <StatCard
                 title="Total Complaints"
                 value="1,234"
@@ -240,14 +240,14 @@ export default function AdminDashboard() {
                 color="primary"
               />
               <StatCard
-                title="Pending"
+                title="Total Records"
                 value="56"
                 change="+5%"
                 icon="📝"
                 color="yellow"
               />
               <StatCard
-                title="Resolved"
+                title="Total Category"
                 value="1,178"
                 change="+8%"
                 icon="🏷️"
@@ -260,8 +260,8 @@ export default function AdminDashboard() {
                 icon="👥"
                 color="purple"
               />
-            </div>
-
+            </div> */}
+            
             {/* Main Content Area */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="p-6">
@@ -309,7 +309,6 @@ function StatCard({ title, value, change, icon, color }: any) {
     </div>
   );
 }
-
 // Desktop Nav Button
 function NavButton({ label, icon, isActive, onClick, sidebarOpen }: any) {
   return (
