@@ -186,7 +186,7 @@
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import { showcomplaints, assignComplaint } from "../actions/complaintAction.action";
-
+import MaintState from './MaintState'
 // --- Logout Button Component ---
 function LogoutButton() {
   return (
@@ -284,6 +284,12 @@ export default function Maintenancelist() {
         </p>
       </div>
     </div>
+
+        {/* User Stats Section */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Your Work Summary</h2>
+          <MaintState></MaintState>
+        </div>
     
     {/* Optional filters or actions */}
     {/* <div className="flex gap-2">

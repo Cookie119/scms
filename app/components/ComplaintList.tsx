@@ -106,7 +106,7 @@ export default function ComplaintList() {
           <nav className="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
             {[
               { id: 'all', label: 'All' },
-              { id: '0', label: 'Pending' },
+              // { id: '0', label: 'Pending' },
               { id: '1', label: 'In Process' },
               { id: '2', label: 'Resolved' },
               { id: '3', label: 'Rejected' },
